@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Horizon STEM x GitHub Copilot Hackathon</title>
+    <style>
+        /* Base Variables & Reset */
+        :root {
+            --bg-main: #0d1117;
+            --bg-card: #161b22;
+            --border: #30363d;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --grad-1: #007acc;
+            --grad-2: #7928ca;
+            --grad-3: #f778ba;
+            --gradient-copilot: linear-gradient(90deg, var(--grad-1), var(--grad-2), var(--grad-3));
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100dvh;
+            width: 100vw;
+            position: relative;
+        }
+
+        /* Ambient Copilot Glow Background */
+        .aura {
+            position: absolute;
+            width: clamp(200px, 50vw, 600px);
+            height: clamp(200px, 50vw, 600px);
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(121, 40, 202, 0.15) 0%, rgba(0, 122, 204, 0.1) 40%, transparent 70%);
+            filter: blur(80px);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .aura.top { top: -10%; right: -10%; }
+        .aura.bottom { bottom: -10%; left: -10%; background: radial-gradient(circle, rgba(247, 120, 186, 0.1) 0%, rgba(121, 40, 202, 0.1) 40%, transparent 70%); }
+
+        /* Fixed Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: clamp(10px, 2vh, 20px) 20px;
+            text-align: center;
+            z-index: 10;
+            background: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        header h1 {
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            font-weight: 700;
+            background: var(--gradient-copilot);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+
+        header p {
+            font-size: clamp(0.8rem, 1.5vw, 1rem);
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Slider Engine */
+        .slider-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            will-change: transform;
+            z-index: 2;
+            position: relative;
+        }
+
+        .slide {
+            min-width: 100vw;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: clamp(80px, 15vh, 120px) 20px clamp(70px, 12vh, 100px);
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: clamp(1.5rem, 4vw, 3rem);
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(1rem, 2vh, 1.5rem);
+        }
+
+        /* Typography & Layout Elements */
+        h2 {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        p, li {
+            font-size: clamp(0.9rem, 1.8vw, 1.1rem);
+            line-height: 1.5;
+            color: var(--text-main);
+        }
+
+        ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        ul li::before {
+            content: "•";
+            color: var(--grad-2);
+            font-weight: bold;
+            display: inline-block; 
+            width: 1em;
+            margin-left: -1em;
+        }
+        
+        ul.custom-list { padding-left: 1em; }
+
+        .highlight {
+            background: var(--gradient-copilot);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+
+        .footnote {
+            font-size: clamp(0.7rem, 1.2vw, 0.85rem);
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        /* Specific Elements */
+        .countdown {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .time-box {
+            background: rgba(48, 54, 61, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: clamp(10px, 2vh, 20px) 5px;
+        }
+
+        .time-box span {
+            display: block;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .time-box label {
+            font-size: clamp(0.6rem, 1.2vw, 0.8rem);
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            background-color: rgba(247, 120, 186, 0.15);
+            color: #f778ba;
+            border: 1px solid rgba(247, 120, 186, 0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        a.button-link {
+            display: inline-block;
+            background: var(--gradient-copilot);
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            transition: opacity 0.2s;
+            border: none;
+        }
+
+        a.button-link:hover {
+            opacity: 0.9;
+        }
+
+        .warning-box {
+            background: rgba(210, 153, 34, 0.1);
+            border-left: 4px solid #d29922;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Navigation Footer */
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: clamp(15px, 3vh, 20px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            background: rgba(13, 17, 23, 0.9);
+            border-top: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: var(--bg-card);
+            border-color: var(--text-muted);
+            color: #fff;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--border);
+            transition: all 0.3s;
+        }
+
+        .dot.active {
+            background: var(--grad-1);
+            box-shadow: 0 0 8px var(--grad-1);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="aura top"></div>
+    <div class="aura bottom"></div>
+
+    <header>
+        <h1>Horizon STEM x GitHub Copilot</h1>
+        <p>Event Briefing</p>
+    </header>
+
+    <div class="slider-container" id="slider">
+        
+        <div class="slide">
+            <div class="card">
+                <h2>Horizon STEM Hackathon</h2>
+                <p>Powered by <span class="highlight">GitHub Copilot</span>. Build, innovate, and showcase your AI-driven applications.</p>
+                
+                <div class="countdown" id="timer">
+                    <div class="time-box"><span id="days">00</span><label>Days</label></div>
+                    <div class="time-box"><span id="hours">00</span><label>Hours</label></div>
+                    <div class="time-box"><span id="minutes">00</span><label>Mins</label></div>
+                    <div class="time-box"><span id="seconds">00</span><label>Secs</label></div>
+                </div>
+                
+                <div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">📍 <strong>Venue Location:</strong></p>
+                    <p>The Coder School<br>4140 Moore Rd Ste B-108, Suwanee, GA 30024</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="card">
+                <h2>Venue & Logistics</h2>
+                
+                <div class="warning-box">
+                    <p>🍕 <strong>Food & Catering:</strong> Costco cheese pizza, Coca-Cola, and water will be provided.</p>
+                    <p style="margin-top: 8px; font-size: 0.9rem; color: #d29922;"><em>Food allergies? Please DM the host immediately on GroupMe.</em></p>
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <p style="margin-bottom: 10px;">⚠️ <strong>Pending Venue Waivers</strong></p>
+                    <p style="font-size: 0.9rem; margin-bottom: 15px;">Venue compliance requires signed waivers. The following participants must complete theirs ASAP:</p>
+                    <div class="tags">
+                        <span class="badge">Shourya M.</span>
+                        <span class="badge">Hash M.</span>
+                        <span class="badge">Ashrith G.</span>
+                        <span class="badge">Harshini R.</span>
+                        <span class="badge">Shreya A.</span>
+                        <span class="badge">Ryan B.</span>
+                        <span class="badge">Lakshu K.</span>
+                        <span class="badge">Srikruthi K.</span>
+                    </div>
+                </div>
+
+                <a href="https://forms.gle/GUJMEtzVyRnbxU4r9" target="_blank" rel="noopener" class="button-link">Sign Waiver Form</a>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="card">
+                <h2>Technical Prerequisites</h2>
+                
+                <ul class="custom-list">
+                    <li>
+                        <strong>GitHub & Copilot API:</strong> You may use any AI tools, but the core application <em>must</em> integrate the GitHub Copilot API. Project prompts will be released at kickoff.
+                    </li>
+                    <li>
+                        <strong>Hardware Check:</strong> Bring your laptop, charger, and any required tech peripherals.
+                    </li>
+                    <li>
+                        <strong>Submission:</strong> Final submissions will be judged via Devpost. (<a href="https://devpost.com" target="_blank" style="color: var(--grad-1);">Devpost.com</a>)
+                    </li>
+                </ul>
+
+                <p class="footnote">
+                    * <strong>Age Rule Note:</strong> GitHub and Devpost require users to be 13+. Attendees under 13 must have a parent or guardian register on their behalf.
+                </p>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="card">
+                <h2>Prizes & Swag</h2>
+                
+                <div style="margin-bottom: 15px;">
+                    <p style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">🏆 Grand Prize</p>
+                    <h3 style="font-size: clamp(1.2rem, 3vw, 1.8rem); margin-top: 5px;" class="highlight">JBL Tune 770NC Headphones</h3>
+                    <p style="font-size: 0.9rem;">(Featuring Adaptive Noise Cancellation)</p>
+                </div>
+
+                <div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">🎁 Participant Perks</p>
+                    <ul class="custom-list">
+                        <li>Official MLH & GitHub sticker packs</li>
+                        <li>Verified participation certificates</li>
+                        <li>Exclusive digital badges</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <button id="prevBtn" class="nav-btn" disabled>← Prev</button>
+        <div class="dots" id="dots-container">
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+        <button id="nextBtn" class="nav-btn">Next →</button>
+    </footer>
+
+    <script>
+        // --- Navigation Logic ---
+        const slider = document.getElementById('slider');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const dots = document.querySelectorAll('.dot');
+        const totalSlides = 4;
+        let currentSlide = 0;
+
+        function updateSlider() {
+            // Move container
+            slider.style.transform = `translateX(-${currentSlide * 100}vw)`;
+            
+            // Update Buttons
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+
+            // Update Dots
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlider();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlider();
+            }
+        });
+
+        // --- Keyboard Navigation ---
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                if (currentSlide < totalSlides - 1) { currentSlide++; updateSlider(); }
+            } else if (e.key === 'ArrowLeft') {
+                if (currentSlide > 0) { currentSlide--; updateSlider(); }
+            }
+        });
+
+        // --- Touch & Swipe Navigation ---
+        let touchstartX = 0;
+        let touchendX = 0;
+        const SWIPE_THRESHOLD = 50; // minimum px movement to count as a swipe
+
+        document.addEventListener('touchstart', (e) => {
+            touchstartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            touchendX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const difference = touchstartX - touchendX;
+            if (Math.abs(difference) > SWIPE_THRESHOLD) {
+                if (difference > 0 && currentSlide < totalSlides - 1) {
+                    // Swiped Left -> Next Slide
+                    currentSlide++;
+                    updateSlider();
+                } else if (difference < 0 && currentSlide > 0) {
+                    // Swiped Right -> Prev Slide
+                    currentSlide--;
+                    updateSlider();
+                }
+            }
+        }
+
+        // --- Countdown Timer Logic ---
+        // Target: July 25, 2026, at 3:30 PM EST
+        const targetDate = new Date('July 25, 2026 15:30:00 EST').getTime();
+
+        const padZero = (num) => num.toString().padStart(2, '0');
+
+        function updateTimer() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            if (distance < 0) {
+                document.getElementById('days').innerText = "00";
+                document.getElementById('hours').innerText = "00";
+                document.getElementById('minutes').innerText = "00";
+                document.getElementById('seconds').innerText = "00";
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById('days').innerText = padZero(days);
+            document.getElementById('hours').innerText = padZero(hours);
+            document.getElementById('minutes').innerText = padZero(minutes);
+            document.getElementById('seconds').innerText = padZero(seconds);
+        }
+
+        // Initialize Timer
+        updateTimer();
+        setInterval(updateTimer, 1000);
+    </script>
+</body>
+</html>
